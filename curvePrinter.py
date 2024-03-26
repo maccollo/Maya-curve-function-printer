@@ -40,12 +40,10 @@ if curveShape:
         if isClosed:
             points = points[0:num_points-degree]
         # Print Python script to recreate the curve
-        print("import maya.cmds as cmds")
         print ("def create_"+curve_name+"_curve(name = '"+curve_name+"#'):")
         indent_level = 1 
         indentation = " " * (indent_level * indent_size)
         print()
-        print(indentation+"# Recreate the curve")
         print(indentation+"points =", '[')
         for point in points:
             print (indentation+str(point)+',')
