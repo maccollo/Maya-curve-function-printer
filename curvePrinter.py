@@ -18,6 +18,7 @@ if selected:
                     break
         if curveShape:
             break
+curve_name = cmds.ls(selection=True)[0]
 if curveShape:
     curve = selected[0]
     # Ensure the selected object is a NURBS curve
@@ -39,10 +40,10 @@ if curveShape:
         if isClosed:
             points = points[0:num_points-degree]
         # Print Python script to recreate the curve
-        print ("def create_curve(name = 'curve#'):")
+        print("import maya.cmds as cmds")
+        print ("def create_"+curve_name+"_curve(name = '"+curve_name+"#'):")
         indent_level = 1 
         indentation = " " * (indent_level * indent_size)
-        print(indentation+"import maya.cmds as cmds")
         print()
         print(indentation+"# Recreate the curve")
         print(indentation+"points =", '[')
@@ -60,7 +61,7 @@ if curveShape:
         print(2*indentation+"knots = [0] * degree + list(range(1, knot_length - (2 * (degree)) + 1)) + [knot_length - (2 * (degree)) + 1] * degree")
         print()
         print(indentation+"cmds.curve(d=degree, p=points, k=knots, periodic=isClosed, n = name)")
-        print('create_curve()')
+        print('create_'+curve_name+'_curve()')
     else:
         print("Selected object is not a NURBS curve.")
 else:
