@@ -1,10 +1,27 @@
+
 import maya.cmds as cmds
 
 # Get the selected curve
 selected = cmds.ls(selection=True, long=True)
 curveShape = None
+className = "CtrlCurves"
 if selected:
+    print("class "+className+":")
+    indent_size = 4  # Number of spaces per indent
+    indentation = " " * (indent_size)
+    print(indentation+"@staticmethod")
+    print(indentation+"def make_curve(points, degree, isClosed, name):")
+    print(2*indentation+"knot_length = len(points) + degree - 1")
+    print(2*indentation+"if isClosed:")
+    print(3*indentation+"knot_length += degree")
+    print(3*indentation+"points = points + points[0:degree]")
+    print(3*indentation+"knots = list(range(1-degree, knot_length-degree+1))")
+    print(2*indentation+"else:")
+    print(3*indentation+"knots = [0] * degree + list(range(1, knot_length - (2 * (degree)) + 1)) + [knot_length - (2 * (degree)) + 1] * degree")
+    print(2*indentation+"return cmds.curve(d=degree, p=points, k=knots, periodic=isClosed, n = name)")
+    curves_function_lines = []
     for obj in selected:
+        curveShape = None
         # Check if the selected object itself is a NURBS curve
         if cmds.nodeType(obj) == "nurbsCurve":
             curveShape = obj
@@ -16,51 +33,40 @@ if selected:
                 if cmds.nodeType(child) == "nurbsCurve":
                     curveShape = child
                     break
+        cmds.select(obj, replace=True)
+        curve_name = cmds.ls(selection=True)[0]
         if curveShape:
-            break
-curve_name = cmds.ls(selection=True)[0]
-if curveShape:
-    curve = selected[0]
-    # Ensure the selected object is a NURBS curve
-    if True:
-        indent_level = 2  # Number of indents you want
-        indent_size = 4  # Number of spaces per indent
-        indentation = " " * (indent_level * indent_size)
-        # Query curve information
-        points = cmds.getAttr(curve + ".controlPoints[*]")
-        degree = cmds.getAttr(curve + ".degree")
-        form = cmds.getAttr(curve + ".form")
-        isClosed = (form == 2)  # 0 is open, 1 is periodic, 2 is closed
-        num_points = len(points)
-        knot_length = len(points) + degree - 1
-        if isClosed:
-            knots = list(range(1-degree, knot_length-degree+1))
+            curve = obj
+            # Ensure the selected object is a NURBS curve
+            if True:
+
+                # Query curve information
+                points = cmds.getAttr(curve + ".controlPoints[*]")
+                degree = cmds.getAttr(curve + ".degree")
+                form = cmds.getAttr(curve + ".form")
+                isClosed = (form == 2)  # 0 is open, 1 is periodic, 2 is closed
+                num_points = len(points)
+                knot_length = len(points) + degree - 1
+                if isClosed:
+                    knots = list(range(1-degree, knot_length-degree+1))
+                else:
+                    knots = [0] * degree + list(range(1, knot_length - (2 * (degree)) + 1)) + [knot_length - (2 * (degree)) + 1] * degree
+                if isClosed:
+                    points = points[0:num_points-degree]
+                # Print Python script to recreate the curve
+                print(indentation+"@staticmethod")
+                curves_function_lines.append("create_"+curve_name+"_curve()")
+                print (indentation+"def create_"+curve_name+"_curve(name = '"+curve_name+"#'):")
+                print(2*indentation+"points =", '[')
+                for point in points:
+                    print (2*indentation+str(point)+',')
+                print(2*indentation+']')
+                print(2*indentation+"degree =", degree)
+                print(2*indentation+"isClosed =", isClosed)
+                print(2*indentation+"return ControlCurves.make_curve(points, degree, isClosed, name)")
+            else:
+                print("Selected object is not a NURBS curve.")
         else:
-            knots = [0] * degree + list(range(1, knot_length - (2 * (degree)) + 1)) + [knot_length - (2 * (degree)) + 1] * degree
-        if isClosed:
-            points = points[0:num_points-degree]
-        # Print Python script to recreate the curve
-        print ("def create_"+curve_name+"_curve(name = '"+curve_name+"#'):")
-        indent_level = 1 
-        indentation = " " * (indent_level * indent_size)
-        print()
-        print(indentation+"points =", '[')
-        for point in points:
-            print (indentation+str(point)+',')
-        print(indentation+']')
-        print(indentation+"degree =", degree)
-        print(indentation+"isClosed =", isClosed)
-        print(indentation+"knot_length =len(points) + degree - 1")
-        print(indentation+"if isClosed:")
-        print(2*indentation+"knot_length += degree")
-        print(2*indentation+"points = points + points[0:degree]")
-        print(2*indentation+"knots = list(range(1-degree, knot_length-degree+1))")
-        print(indentation+"else:")
-        print(2*indentation+"knots = [0] * degree + list(range(1, knot_length - (2 * (degree)) + 1)) + [knot_length - (2 * (degree)) + 1] * degree")
-        print()
-        print(indentation+"cmds.curve(d=degree, p=points, k=knots, periodic=isClosed, n = name)")
-        print('create_'+curve_name+'_curve()')
-    else:
-        print("Selected object is not a NURBS curve.")
-else:
-    print("Please select a NURBS curve.")
+            print("Please select a NURBS curve.")
+for line in curves_function_lines:
+    print(className+"."+line)
